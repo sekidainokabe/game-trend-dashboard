@@ -28,6 +28,18 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    // ゲームデータベース（発売予定・ジャンル・評価・対応機種）。無料プランは非商用・月2万回まで
+    'rawg' => [
+        'key' => env('RAWG_API_KEY'),
+        'base_url' => 'https://api.rawg.io/api',
+    ],
+
+    // Steam。人数と人気上位は公式の Web API（キー不要）、詳細はストアの API（説明書なし・回数制限あり）
+    'steam' => [
+        'api_url' => 'https://api.steampowered.com',
+        'store_url' => 'https://store.steampowered.com',
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
