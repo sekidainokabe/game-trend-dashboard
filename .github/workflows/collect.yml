@@ -1,0 +1,45 @@
+name: 毎時のデータ取得
+
+# 毎時7分に実行する（0分ちょうどは GitHub Actions が混み、遅れやすいため）。
+# 手動でも実行できる（Actions の画面の「Run workflow」）
+on:
+  schedule:
+    - cron: '7 * * * *'
+  workflow_dispatch:
+
+# 前の回が終わっていなければ、次の回は待つ（同じ処理が2つ同時に動かないように）
+concurrency:
+  group: collect
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    name: app:collect
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      # Supabase の接続先（Session pooler の URI）と RAWG のキーは、リポジトリの Secrets に入れる
+      DB_CONNECTION: pgsql
+      DB_URL: ${{ secrets.DB_URL }}
+      RAWG_API_KEY: ${{ secrets.RAWG_API_KEY }}
+      APP_ENV: production
+      LOG_CHANNEL: stderr
+    steps:
+      - uses: actions/checkout@v5
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: pdo_pgsql
+          coverage: none
+      - uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: composer-${{ hashFiles('backend/composer.lock') }}
+      - run: composer install --no-dev --no-interaction --prefer-dist --no-progress
+      - run: cp .env.example .env && php artisan key:generate --force
+      # 表を最新にしてから取得する（画面のアプリは普段止めているため、ここでも行う）
+      - run: php artisan migrate --force
+      - run: php artisan app:collect
