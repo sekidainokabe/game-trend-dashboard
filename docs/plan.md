@@ -70,3 +70,6 @@ Steam で今遊ばれているゲームの人数・価格・評価・発売予�
 - ステップ3（11/24）：取得処理（`php artisan app:collect`）。手元で本物の API から取得し、122本（Steam 107本、RAWG 22本、うち両方にある 7本）、人数 96本分、DB は約 9MB
   - Steam のストアの詳細が取れないゲームがある（日本で売っていないなど）。追跡をやめ、実行記録に appid を残す
   - RAWG の発売予定は90日先までで22本と少ない
+- ステップ4（11/24）：GitHub Actions（`.github/workflows/collect.yml`、毎時7分）から Supabase へ取得。手動実行で成功
+  - 1日1回の処理がある回は約12分かかる（Actions のサーバーは米国、Supabase は東京で、SQL 1回ごとの往復が長い）。毎時の人数だけの回は短い
+  - Secrets：`DB_URL`（Supabase の Session pooler。Actions のサーバーは IPv6 につなげないため Direct connection は使えない）、`RAWG_API_KEY`
