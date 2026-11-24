@@ -3,11 +3,18 @@
 use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\GameController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', HealthController::class);
+
+// 閲覧はログインなしでできる（URL を開いた人がすぐ中身を見られるように）。データは毎時しか変わらないのでキャッシュする
+Route::get('/dashboard', DashboardController::class);
+Route::get('/games/{game}', [GameController::class, 'show']);
+Route::get('/games/{game}/players', [GameController::class, 'players']);
 
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
 

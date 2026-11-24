@@ -3,6 +3,7 @@ import { AppLayout } from './components/AppLayout'
 import { RequireAuth } from './components/RequireAuth'
 import { AdminUsersPage } from './pages/AdminUsersPage'
 import { AuditLogsPage } from './pages/AuditLogsPage'
+import { GamePage } from './pages/GamePage'
 import { HomePage } from './pages/HomePage'
 import { LoginPage } from './pages/LoginPage'
 import { PasswordPage } from './pages/PasswordPage'
@@ -15,6 +16,7 @@ export const router = createBrowserRouter([
     children: [
       // ダッシュボードはログインなしで見られる（URL を開いた人がすぐ中身を見られるように）
       { index: true, element: <HomePage />, handle: { title: 'ホーム' } },
+      { path: 'games/:id', element: <GamePage />, handle: { title: 'ゲームの詳細' } },
       {
         // ここから下のページはログインが必要
         element: <RequireAuth />,

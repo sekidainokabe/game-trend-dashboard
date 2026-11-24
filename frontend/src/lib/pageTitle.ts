@@ -4,9 +4,9 @@ import { useMatches } from 'react-router'
 /** ルートの handle に書くページ名（router.tsx） */
 export type RouteHandle = { title: string }
 
-const APP_NAME = 'master-studio'
+const APP_NAME = 'ゲーム人気ダッシュボード'
 
-/** ブラウザのタブや、読み上げソフトがページを移ったときに読む題名。「操作履歴 - master-studio」の形 */
+/** ブラウザのタブや、読み上げソフトがページを移ったときに読む題名。「操作履歴 - ゲーム人気ダッシュボード」の形 */
 export function documentTitle(pageTitle: string | undefined): string {
   return pageTitle ? `${pageTitle} - ${APP_NAME}` : APP_NAME
 }
@@ -28,4 +28,16 @@ export function useDocumentTitle(): string | undefined {
     document.title = documentTitle(title)
   }, [title])
   return title
+}
+
+/**
+ * データを読んでから決まる題名（ゲームの名前など）でタブの題名を上書きする。
+ * 外枠（AppLayout）の useDocumentTitle より後に動くよう、名前が分かったときだけ設定する
+ */
+export function usePageTitleOverride(pageTitle: string | undefined): void {
+  useEffect(() => {
+    if (pageTitle !== undefined) {
+      document.title = documentTitle(pageTitle)
+    }
+  }, [pageTitle])
 }
