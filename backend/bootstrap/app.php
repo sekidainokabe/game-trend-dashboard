@@ -1,0 +1,45 @@
+<?php
+
+use App\Http\Middleware\EnsureUserIsActive;
+use Illuminate\Foundation\Application;
+use Illuminate\Foundation\Configuration\Exceptions;
+use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+
+return Application::configure(basePath: dirname(__DIR__))
+    ->withRouting(
+        web: __DIR__.'/../routes/web.php',
+        api: __DIR__.'/../routes/api.php',
+        commands: __DIR__.'/../routes/console.php',
+        health: '/up',
+    )
+    ->withMiddleware(function (Middleware $middleware): void {
+        // SPA からの API リクエストでセッション（クッキー）と CSRF 検証を有効にする
+        $middleware->statefulApi();
+
+        // 本番では Railway のプロキシが HTTPS を終端し、X-Forwarded-* ヘッダーで元のリクエストを伝える。
+        // プロキシの IP は固定でなく、アプリへはプロキシ経由でしか届かないため、すべてのプロキシを信頼する
+        $middleware->trustProxies(at: '*');
+
+        // 未ログイン時、Laravel は既定で名前付きルート "login" へのリダイレクト先を作ろうとする。
+        // このアプリにはそのルートがなく、JSON を求めないリクエストでは 500 になるため、SPA のログイン画面を指定する
+        // （api/* は下の shouldRenderJsonWhen により、リダイレクトではなく 401 の JSON になる）
+        $middleware->redirectGuestsTo('/login');
+
+        // ログイン中に無効化されたユーザーを締め出す（routes/api.php で auth:sanctum のあとに付ける）
+        $middleware->alias(['active' => EnsureUserIsActive::class]);
+    })
+    ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->shouldRenderJsonWhen(
+            fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
+        );
+
+        // モデルが見つからないときの 404 は、元のメッセージに内部のクラス名が含まれ、本番でもそのまま返ってしまう。
+        // API では何が見つからなかったかを外に出さないよう、汎用の文言に置き換える
+        $exceptions->render(function (NotFoundHttpException $e, Request $request) {
+            if ($request->is('api/*')) {
+                return response()->json(['message' => 'Not found.'], 404);
+            }
+        });
+    })->create();
