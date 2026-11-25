@@ -78,3 +78,4 @@ Steam で今遊ばれているゲームの人数・価格・評価・発売予�
 - 定期実行（11/25）：GitHub の定期実行が17時間で1回しか動かなかったため、外部の cron（cron-job.org）から毎時、手動実行の API で起動する形にした。GitHub 側の定期実行は予備として残す。リポジトリを公開
 - ステップ7（11/25）：ウォッチリスト、取得の状況・ゲームの管理（admin）。集計から外す判断は `excluded_at` に持つ（`tracked` は取得処理が毎日上書きするため）
 - ステップ8（11/25）：大量データでの速さ（`docs/performance.md`）と使いやすさ（`docs/accessibility.md`）。本番の約20倍でも全 API が 90ms 以内。axe-core とコントラストの自動テストを追加し、見つかった色とスマホのメニューを直した
+- ステップ9（11/25）：README（先頭に画面のキャプチャ、募集要件との対応表、手元での動かし方）、`docs/deploy.md` を本番の構成（Supabase、GitHub Actions、cron-job.org、Railway）に書き換え

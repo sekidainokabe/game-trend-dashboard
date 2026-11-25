@@ -1,74 +1,130 @@
-# デプロイ手順（Railway）
+# 本番の手順（Supabase ＋ GitHub Actions ＋ cron-job.org ＋ Railway）
 
-- 公開 URL：https://master-studio-production.up.railway.app/
-- 構成：Railway の1プロジェクトに、2つのサービスがある
-  - `master-studio`：アプリ。リポジトリ直下の `Dockerfile` からビルドする
-  - `MySQL`：DB。データはボリューム `mysql-volume` に保存される
-- 常時稼働はさせず、必要なときだけ ON にする（費用を抑えるため）
-- GitHub への push で自動デプロイしない設定にしている（Settings → Source → Auto deploys を Disable）
+## 構成
 
-## ON にする（起動）
+| 役割 | サービス | 料金 | 動かし方 |
+| --- | --- | --- | --- |
+| DB | Supabase（PostgreSQL、東京） | 無料枠（500MB） | 常に動いている |
+| 毎時の取得 | GitHub Actions（`.github/workflows/collect.yml`） | 無料（公開リポジトリ） | cron-job.org から毎時起動する |
+| 起動の合図 | cron-job.org | 無料 | 毎時7分に GitHub の API を呼ぶ |
+| 画面と API | Railway（リポジトリ直下の `Dockerfile`） | 使った分だけ | 見せるときだけ ON にする |
 
-1. **MySQL** のサービスの「Deployments」で、最新のデプロイの「⋮」→「Redeploy」を選ぶ。**ACTIVE になるまで待つ**
-2. **アプリ**のサービスを選んだ状態で `Ctrl + K` →「**Deploy Latest Commit**」を選ぶ
-3. `/api/health` が `{"status":"ok","database":"ok"}` を返せば完了
+データは画面のアプリを止めている間もたまり続けます。Railway を ON にすると、その時点までのデータがすぐに見られます。
 
-注意：
-- アプリでは「Redeploy」を使わない。Redeploy は**選んだデプロイと同じコミット**を再デプロイするため、一覧に残っている古いデプロイから実行すると、修正前のコードが起動してしまう（2026-11-05 に実際に起きた）
-- MySQL より先にアプリを起動すると、起動時の `migrate` が DB に接続できずに失敗する
+秘密の値（DB の接続先、API キー、トークン、`APP_KEY`）は、リポジトリやチャットには載せず、各サービスの設定画面に本人が入れます。
 
-## OFF にする（停止）
+## 1. Supabase（DB）
 
-1. **アプリ**のサービスで、ACTIVE のデプロイの「⋮」→「Remove deployment」を選ぶ
-2. **MySQL** のサービスでも、同じように「Remove deployment」を選ぶ
+1. プロジェクトを作る（Region は Tokyo）
+2. 「Connect」→ **Session pooler** の URI を控える。これを `DB_URL` として GitHub と Railway の両方に入れる
+   - Direct connection は IPv6 でしかつながらず、GitHub Actions のサーバーからは使えない
+3. 表は、取得のワークフローと Railway の起動時に `migrate --force` で自動で作られる
 
-設定、環境変数、MySQL のボリューム（データ）は残る。止めている間にかかるのは、ボリュームの保存料金だけ。
+無料のプロジェクトは、7日間使われないと一時停止します。毎時の取得で書き込みが続いている限り止まりません。
 
-## コードを更新したとき
+## 2. GitHub Actions（毎時の取得）
 
-main に push したあと、上の「ON にする」の 2 と同じく `Ctrl + K` →「Deploy Latest Commit」を選ぶ。
+リポジトリの Settings → Secrets and variables → Actions に、次の2つを入れます。
 
-本番へ出す前に、Git に入っているファイルだけでイメージを作り、起動することを確かめるとよい。空のフォルダなど、手元にしかないものは Railway でのビルドには含まれないため（2026-11-04 にこれで起動に失敗した）。
+| Secret | 値 |
+| --- | --- |
+| `DB_URL` | Supabase の Session pooler の URI |
+| `RAWG_API_KEY` | RAWG のキー（https://rawg.io/apidocs） |
 
-```bash
-cd ~/master-studio && git ls-files -z | tar --null -T - -c | docker build -t master-studio:check -
-```
+ワークフローは「PHP を用意 → `migrate --force` → `php artisan app:collect`」を行います。手動では Actions の画面の「毎時のデータ取得」→「Run workflow」で動かせます。
 
-## 起動時の処理
+- 1日1回の処理（人気上位の更新、Steam の詳細、RAWG の発売予定、1日ごとの集計、古いデータの削除）がある回は約12分かかります。Actions のサーバー（米国）と Supabase（東京）の間の往復が長いためです。毎時の人数だけの回は30秒ほどです
+- `concurrency` で、前の回が終わっていなければ次の回は待ちます
+- ワークフローの `schedule`（毎時7分）は予備として残しています。GitHub の定期実行は混雑で数時間遅れたり抜けたりするため（2026-11-25 に17時間で1回しか動かなかった）、主には次の cron-job.org から起動します
 
-コンテナを起動すると `docker/start.sh` が次の順に実行される。
+## 3. cron-job.org（毎時の起動）
+
+GitHub の「ワークフローを手動で起動する API」を、毎時呼びます。
+
+### トークンを作る（GitHub）
+
+Settings → Developer settings → Personal access tokens → **Fine-grained tokens** で作ります。
+
+- Repository access：このリポジトリだけ
+- Permissions：**Actions：Read and write**（Metadata：Read-only は自動で付く）
+- 有効期限：最長でも1年。**切れると取得が止まる**ので、期限の前に作り直して cron-job.org の値を差し替える
+
+### ジョブを作る（cron-job.org）
+
+| 項目 | 値 |
+| --- | --- |
+| URL | `https://api.github.com/repos/sekidainokabe/game-trend-dashboard/actions/workflows/collect.yml/dispatches` |
+| Schedule | 毎時 7分 |
+| Request method | POST |
+| Headers | `Authorization: Bearer （トークン）`、`Accept: application/vnd.github+json`、`X-GitHub-Api-Version: 2022-11-28` |
+| Request body | `{"ref":"main"}` |
+
+成功すると GitHub は 204（本文なし）を返し、Actions の画面に「workflow_dispatch」の実行が増えます。
+
+### 動いているかの確かめ方
+
+- Actions の画面で、毎時7分すぎに実行が増えているか
+- 管理画面の「取得の状況」：最後に人数を取った時刻が2時間より前になると、注意の表示が出る
+- cron-job.org の実行の履歴：401 ならトークンの期限切れか権限の不足、404 ならURLの誤り
+
+## 4. Railway（画面と API）
+
+### 最初の設定
+
+1. New Project → Deploy from GitHub repo → このリポジトリを選ぶ。リポジトリ直下の `Dockerfile` からビルドされる
+2. Settings
+   - Region：Asia（Supabase の東京に近い場所）
+   - Networking：公開ドメインを作り、転送先のポートは 8080
+   - Deploy：Healthcheck Path は `/api/health`
+   - Source：Auto deploys は Disable（push のたびに起動して料金がかからないように）
+3. 環境変数（Variables）を入れる（下の表）
+4. 未適用の変更（staged changes）の案内から Deploy する
+
+| 変数 | 値 |
+| --- | --- |
+| `APP_KEY` | `sail artisan key:generate --show` で作った値 |
+| `APP_URL` | `https://（公開ドメイン）` |
+| `DB_CONNECTION` | `pgsql` |
+| `DB_URL` | Supabase の Session pooler の URI（GitHub の Secret と同じ値） |
+| `SESSION_SECURE_COOKIE` | `true` |
+| `SANCTUM_STATEFUL_DOMAINS` | 公開ドメイン（`https://` を付けない） |
+| `DEMO_ACCOUNTS_LOCKED` | `true`（公開しているデモ用アカウントの役割・状態・パスワードを変えられないようにする） |
+| `PORT` | `8080` |
+
+`APP_ENV=production`、`APP_DEBUG=false`、`LOG_CHANNEL=stderr` は `Dockerfile` で設定済みです。`RAWG_API_KEY` は取得を行わないため不要です。
+
+注意：変数を足したり変えたりしただけでは、アプリに届きません。staged changes から適用（Deploy）して起動し直し、変えた設定が効いているかを画面で確かめます（master-studio で、適用し忘れて設定が効いていなかったことがある）。
+
+### 起動時の処理（`docker/start.sh`）
 
 1. `config:cache` / `route:cache`
 2. `migrate --force`
-3. `app:seed-if-empty`：ユーザーが1人もいないときだけ、初期データ（ユーザー・マスタ・v1 のリリース）を入れる
-4. `app:seed-demo`：デモ用の変更セット（反映済み1つ・エラー入りの下書き1つ）が、まだないときだけ入れる
-5. Web サーバー（FrankenPHP）の起動
+3. `app:seed-if-empty`：ユーザーが1人もいないときだけ、ログイン用のアカウント（member と admin）を作る
+4. Web サーバー（FrankenPHP）の起動
 
-4 以外のどこかで失敗すると、Web サーバーまで進まない（4 は失敗しても起動を続け、ログに「デモ用データを入れられませんでした」と出る）。その場合は Healthcheck failure になるので、「View logs」→「Deploy Logs」で原因を確かめる。
+どこかで失敗すると Web サーバーまで進まず、Healthcheck failure になります。「View logs」→「Deploy Logs」で原因を確かめます。
 
-## 環境変数（アプリのサービス）
+### ON にする
 
-| 変数 | 値 |
-|---|---|
-| `APP_ENV` | `production` |
-| `APP_DEBUG` | `false` |
-| `APP_KEY` | `sail artisan key:generate --show` で作った値（リポジトリやチャットには載せない） |
-| `APP_URL` | `https://master-studio-production.up.railway.app` |
-| `DB_CONNECTION` | `mysql` |
-| `DB_URL` | `${{MySQL.MYSQL_URL}}`（MySQL サービスの変数を参照する） |
-| `SESSION_SECURE_COOKIE` | `true` |
-| `SANCTUM_STATEFUL_DOMAINS` | `master-studio-production.up.railway.app` |
-| `LOG_CHANNEL` | `stderr` |
-| `PORT` | `8080` |
-| `DEMO_ACCOUNTS_LOCKED` | `true`（デモ用の3アカウントの役割・状態・パスワードを変えられないようにする。公開デモでは誰でも admin でログインできるため。2026-11-16 に追加） |
+アプリのサービスを選んだ状態で `Ctrl + K` →「**Deploy Latest Commit**」。`/api/health` が `{"status":"ok","database":"ok"}` を返せば完了です。DB は Supabase で常に動いているため、DB を先に起動する手順はありません。
 
-注意：変数を足したり変えたりしただけでは、アプリに届かない。画面の上に出る未適用の変更（staged changes）の案内から適用（Deploy）して、アプリを起動し直す必要がある。適用したあとは、変えた設定が効いているかを画面で確かめる（2026-11-16、適用し忘れてデモ用アカウントの保護が効いていなかった）。
+「Redeploy」は使いません。Redeploy は選んだデプロイと同じコミットを起動し直すため、一覧に残っている古いデプロイから実行すると、修正前のコードが起動します（master-studio で実際に起きた）。
 
-ほかの設定：
-- Networking：公開ドメインの転送先ポートは 8080
-- Deploy：Healthcheck Path は `/api/health`
+### OFF にする
+
+ACTIVE のデプロイの「⋮」→「Remove deployment」。設定と環境変数は残ります。データは Supabase にあるため、止めている間も取得は続きます。
+
+### コードを更新したとき
+
+main に push し、CI が通ったのを確かめてから「Deploy Latest Commit」。
+
+本番へ出す前に、Git に入っているファイルだけでイメージを作り、起動できるかを確かめるとよいです。手元にしかないファイル（空のフォルダなど）は Railway のビルドに含まれないためです。
+
+```bash
+cd ~/game-trend-dashboard && git ls-files -z | tar --null -T - -c | docker build -t game-trend-dashboard:check -
+```
 
 ## 料金
 
-- 2026-11-04 から30日間の無料トライアル（$5 分のクレジット）を利用中
-- トライアルが終わったら、Free プランか Hobby プラン（月5ドル）に切り替える。Hobby プランでカードを登録するときに、ワークスペースの使用料に上限（Hard limit）を設定する
+- Supabase・GitHub Actions・cron-job.org：無料
+- Railway：動かしている時間の分だけ。Hobby プランでは、ワークスペースの使用料に上限（Hard limit）を設定しておく
