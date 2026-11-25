@@ -26,12 +26,12 @@ class ReleaseController extends Controller
 
         // 発売予定は毎日の取得で変わる。最新の取得時刻をキーにしたキャッシュで十分に新しい
         $data = $stats->remember("releases:{$month}", function () use ($start, $thisMonth, $stats) {
-            $games = Game::whereBetween('release_date', [$start->toDateString(), $start->endOfMonth()->toDateString()])
+            $games = Game::whereNull('excluded_at')->whereBetween('release_date', [$start->toDateString(), $start->endOfMonth()->toDateString()])
                 ->orderBy('release_date')
                 ->orderBy('name')
                 ->get(['id', 'name', 'image_url', 'release_date', 'platforms', 'is_free', 'price_jpy', 'coming_soon']);
 
-            $undated = Game::where('coming_soon', true)->whereNull('release_date')
+            $undated = Game::whereNull('excluded_at')->where('coming_soon', true)->whereNull('release_date')
                 ->orderBy('name')
                 ->limit(self::UNDATED_LIMIT)
                 ->get(['id', 'name', 'image_url', 'platforms', 'is_free', 'price_jpy', 'coming_soon']);
@@ -68,6 +68,7 @@ class ReleaseController extends Controller
     {
         $end = $thisMonth->addMonths(self::MONTHS_AHEAD - 1)->endOfMonth();
         $counts = DB::table('games')
+            ->whereNull('excluded_at')
             ->whereBetween('release_date', [$thisMonth->toDateString(), $end->toDateString()])
             ->groupByRaw("to_char(release_date, 'YYYY-MM')")
             ->selectRaw("to_char(release_date, 'YYYY-MM') as month, count(*) as games")

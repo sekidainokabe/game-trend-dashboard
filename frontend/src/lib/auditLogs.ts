@@ -7,6 +7,8 @@ export type AuditAction =
   | 'user.create'
   | 'user.update'
   | 'user.password'
+  | 'game.exclude'
+  | 'game.include'
 
 /** 絞り込みの選択肢。表示名はサーバーの AuditAction::label() と同じ */
 export const AUDIT_ACTION_LABELS: Record<AuditAction, string> = {
@@ -14,6 +16,8 @@ export const AUDIT_ACTION_LABELS: Record<AuditAction, string> = {
   'user.create': 'ユーザーの追加',
   'user.update': 'ユーザーの変更',
   'user.password': 'パスワードの変更',
+  'game.exclude': 'ゲームを集計から外す',
+  'game.include': 'ゲームを集計に戻す',
 }
 
 export const AUDIT_ACTIONS = Object.keys(AUDIT_ACTION_LABELS) as AuditAction[]
@@ -23,8 +27,8 @@ export type AuditLog = {
   user: { id: number; name: string } | null
   action: AuditAction
   action_label: string
-  /** title はユーザーの名前。削除済みなら null */
-  target: { type: 'user'; id: number; title: string | null }
+  /** title はユーザーの名前かゲームの名前。削除済みなら null */
+  target: { type: 'user' | 'game'; id: number; title: string | null }
   detail: Record<string, unknown> | null
   created_at: string
 }

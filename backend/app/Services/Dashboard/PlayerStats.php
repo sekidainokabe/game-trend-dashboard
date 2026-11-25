@@ -18,6 +18,15 @@ class PlayerStats
     /** 増減率を出す最低の人数（数十人のゲームが「+300%」で急上昇の上位に並ばないように） */
     private const RISING_MIN_PLAYERS = 1000;
 
+    private const VERSION_KEY = 'stats:version';
+
+    /** 集計のキャッシュをすべて作り直させる（古いキーは期限で消える） */
+    public static function invalidate(): void
+    {
+        Cache::add(self::VERSION_KEY, 0);
+        Cache::increment(self::VERSION_KEY);
+    }
+
     /** 最新の取得時刻（UTC）。まだ1回も取っていなければ null */
     public function latestCapturedAt(): ?CarbonImmutable
     {
@@ -37,7 +46,9 @@ class PlayerStats
     public function remember(string $name, callable $compute): mixed
     {
         $latest = $this->latestCapturedAt();
-        $key = "stats:{$name}:".($latest?->timestamp ?? 'none');
+        // 版の番号：管理者がゲームを外したときなど、取得時刻が変わらなくても作り直したいときに上げる
+        $version = Cache::get(self::VERSION_KEY, 0);
+        $key = "stats:{$name}:".($latest?->timestamp ?? 'none').":v{$version}";
 
         return Cache::remember($key, now()->addHours(2), fn () => $compute($latest));
     }
@@ -54,6 +65,7 @@ class PlayerStats
                     ->where('prev.captured_at', '=', $latest->subDay());
             })
             ->where('s.captured_at', '=', $latest)
+            ->whereNull('g.excluded_at')
             ->select('g.id', 'g.name', 'g.image_url', 's.players', 'prev.players as players_24h_ago');
     }
 

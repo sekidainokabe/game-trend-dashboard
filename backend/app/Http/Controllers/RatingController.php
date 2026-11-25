@@ -31,6 +31,7 @@ class RatingController extends Controller
                 'games' => DB::table('player_snapshots as s')
                     ->join('games as g', 'g.id', '=', 's.game_id')
                     ->where('s.captured_at', $latest)
+                    ->whereNull('g.excluded_at')
                     ->where('s.players', '>', 0)
                     ->select('g.id', 'g.name', 'g.image_url', 's.players', 'g.metacritic', 'g.recommendations', 'g.is_free', 'g.price_jpy')
                     ->selectSub((clone $mainGenre)->select('ge.key'), 'genre_key')

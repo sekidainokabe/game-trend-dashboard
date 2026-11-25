@@ -29,7 +29,7 @@ class FetchPlayers implements CollectorJob
     public function run(): JobResult
     {
         // 発売前のゲームは人数がないので問い合わせない
-        $games = Game::where('tracked', true)->whereNotNull('steam_appid')->where('coming_soon', false)
+        $games = Game::where('tracked', true)->whereNull('excluded_at')->whereNotNull('steam_appid')->where('coming_soon', false)
             ->pluck('id', 'steam_appid');
         $capturedAt = now()->utc()->startOfHour();
 

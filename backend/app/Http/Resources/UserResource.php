@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\AuditLog;
+use App\Models\Game;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -28,6 +29,7 @@ class UserResource extends JsonResource
             'can' => [
                 'view_audit_logs' => $this->resource->can('viewAny', AuditLog::class),
                 'manage_users' => $this->resource->can('viewAny', User::class),
+                'manage_games' => $this->resource->can('manage', Game::class),
                 // 公開デモのアカウントは、自分のパスワードも変えられない（config/demo.php）
                 'change_password' => $this->resource->can('changePassword', $this->resource),
             ],

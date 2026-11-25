@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 #[Fillable([
     'steam_appid', 'rawg_id', 'rawg_slug', 'name', 'image_url', 'release_date', 'coming_soon', 'is_free',
-    'price_jpy', 'discount_percent', 'metacritic', 'rawg_rating', 'recommendations', 'platforms', 'tracked', 'details_fetched_at',
+    'price_jpy', 'discount_percent', 'metacritic', 'rawg_rating', 'recommendations', 'platforms', 'tracked', 'details_fetched_at', 'excluded_at',
 ])]
 class Game extends Model
 {
@@ -22,6 +22,7 @@ class Game extends Model
             'platforms' => 'array',
             'tracked' => 'boolean',
             'details_fetched_at' => 'datetime',
+            'excluded_at' => 'datetime',
         ];
     }
 

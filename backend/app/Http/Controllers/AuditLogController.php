@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\AuditAction;
 use App\Http\Resources\AuditLogResource;
 use App\Models\AuditLog;
+use App\Models\Game;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
@@ -44,13 +45,16 @@ class AuditLogController extends Controller
             ->paginate(self::PER_PAGE)
             ->withQueryString();
 
-        // 対象がユーザー（ユーザー管理・ログイン）のときは名前を出す。こちらも1回の SQL
+        // 対象の名前（ユーザーなら名前、ゲームならゲーム名）を出す。種類ごとに1回の SQL
         $userIds = $logs->getCollection()->where('target_type', 'user')->pluck('target_id')->unique();
         $names = $userIds->isEmpty() ? collect() : User::whereIn('id', $userIds)->pluck('name', 'id');
+        $gameIds = $logs->getCollection()->where('target_type', 'game')->pluck('target_id')->unique();
+        $games = $gameIds->isEmpty() ? collect() : Game::whereIn('id', $gameIds)->pluck('name', 'id');
         foreach ($logs as $log) {
             // 保存しない、表示のためだけの値
             $log->target_title = match ($log->target_type) {
                 'user' => $names->get($log->target_id),
+                'game' => $games->get($log->target_id),
                 default => null,
             };
         }

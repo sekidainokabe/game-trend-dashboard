@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { Link, useLocation, useParams } from 'react-router'
 import { Area, CartesianGrid, ComposedChart, Line, ReferenceArea, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { ChangeBadge, GameThumb, GenreChips } from '../components/GameParts'
 import {
@@ -14,7 +14,9 @@ import {
   type GameDetail,
   type RangeKey,
 } from '../lib/dashboard'
+import { useMe } from '../lib/auth'
 import { usePageTitleOverride } from '../lib/pageTitle'
+import { useToggleWatch, useWatchlist } from '../lib/watchlist'
 
 /** ゲームの詳細：人数の推移、価格とセール、評価 */
 export function GamePage() {
@@ -49,6 +51,7 @@ export function GamePage() {
             {game.store_url && <a href={game.store_url}>Steam のストアで見る</a>}
             {game.rawg_url && <a href={game.rawg_url}>RAWG で見る</a>}
           </p>
+          <WatchButton game={game} />
         </div>
       </header>
 
@@ -60,6 +63,47 @@ export function GamePage() {
         <PlayersChart id={game.id} />
       )}
     </>
+  )
+}
+
+/** ウォッチリストへの登録・解除。ログインしていなければ、ログインへの案内を出す */
+function WatchButton({ game }: { game: GameDetail }) {
+  const location = useLocation()
+  const { data: me } = useMe()
+  const { data: watchlist } = useWatchlist()
+  const toggle = useToggleWatch()
+
+  if (me === undefined) return null
+  if (me === null) {
+    return (
+      <p className="sub">
+        <Link to="/login" state={{ from: location.pathname }}>
+          ログイン
+        </Link>
+        すると、ウォッチリストに登録して動きを追えます。
+      </p>
+    )
+  }
+
+  const watching = watchlist?.some((g) => g.id === game.id) ?? false
+  return (
+    <p>
+      <button
+        type="button"
+        className={watching ? undefined : 'secondary'}
+        aria-pressed={watching}
+        disabled={toggle.isPending || watchlist === undefined}
+        onClick={() => toggle.mutate({ game, watching: !watching })}
+      >
+        {watching ? '★ ウォッチリストに登録済み' : '☆ ウォッチリストに追加'}
+      </button>
+      {toggle.isError && (
+        <span role="alert" className="sub">
+          {' '}
+          登録できませんでした（登録できるのは50本までです）。
+        </span>
+      )}
+    </p>
   )
 }
 

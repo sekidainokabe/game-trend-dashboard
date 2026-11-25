@@ -1,6 +1,8 @@
 import { createBrowserRouter } from 'react-router'
 import { AppLayout } from './components/AppLayout'
 import { RequireAuth } from './components/RequireAuth'
+import { AdminCollectionPage } from './pages/AdminCollectionPage'
+import { AdminGamesPage } from './pages/AdminGamesPage'
 import { AdminUsersPage } from './pages/AdminUsersPage'
 import { AuditLogsPage } from './pages/AuditLogsPage'
 import { GamePage } from './pages/GamePage'
@@ -10,6 +12,7 @@ import { LoginPage } from './pages/LoginPage'
 import { PasswordPage } from './pages/PasswordPage'
 import { RankingPage } from './pages/RankingPage'
 import { RatingsPage } from './pages/RatingsPage'
+import { WatchlistPage } from './pages/WatchlistPage'
 import { ReleasesPage } from './pages/ReleasesPage'
 
 // handle.title：ブラウザのタブに出すページ名（lib/pageTitle.ts）
@@ -29,6 +32,9 @@ export const router = createBrowserRouter([
         // ここから下のページはログインが必要
         element: <RequireAuth />,
         children: [
+          { path: 'watchlist', element: <WatchlistPage />, handle: { title: 'ウォッチリスト' } },
+          { path: 'admin/collection', element: <AdminCollectionPage />, handle: { title: '取得の状況' } },
+          { path: 'admin/games', element: <AdminGamesPage />, handle: { title: 'ゲームの管理' } },
           { path: 'audit-logs', element: <AuditLogsPage />, handle: { title: '操作履歴' } },
           { path: 'admin/users', element: <AdminUsersPage />, handle: { title: 'ユーザー管理' } },
           { path: 'account/password', element: <PasswordPage />, handle: { title: 'パスワードの変更' } },

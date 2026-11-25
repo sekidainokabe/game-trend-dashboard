@@ -12,6 +12,8 @@ export type User = {
   can: {
     view_audit_logs: boolean
     manage_users: boolean
+    /** 取得の状況・ゲームの管理（admin だけ） */
+    manage_games: boolean
     /** 公開デモのアカウントは false（自分のパスワードも変えられない） */
     change_password: boolean
   }

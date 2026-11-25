@@ -31,7 +31,7 @@ class FetchSteamDetails implements CollectorJob
 
     public function run(): JobResult
     {
-        $games = Game::where('tracked', true)->whereNotNull('steam_appid')->orderBy('id')->get();
+        $games = Game::where('tracked', true)->whereNull('excluded_at')->whereNotNull('steam_appid')->orderBy('id')->get();
         $today = now()->timezone('Asia/Tokyo')->toDateString();
         $succeeded = 0;
         $failed = [];

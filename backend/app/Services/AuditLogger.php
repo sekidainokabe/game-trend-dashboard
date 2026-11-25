@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\AuditAction;
 use App\Models\AuditLog;
+use App\Models\Game;
 use App\Models\User;
 
 /**
@@ -18,12 +19,12 @@ class AuditLogger
     /**
      * @param  array<string, mixed>|null  $detail  操作ごとの補足（件数、コメントなど）
      */
-    public function record(User $user, AuditAction $action, User $target, ?array $detail = null): AuditLog
+    public function record(User $user, AuditAction $action, User|Game $target, ?array $detail = null): AuditLog
     {
         return AuditLog::create([
             'user_id' => $user->id,
             'action' => $action,
-            'target_type' => 'user',
+            'target_type' => $target instanceof Game ? 'game' : 'user',
             'target_id' => $target->id,
             'detail' => $detail,
         ]);

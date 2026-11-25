@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\AdminCollectionController;
+use App\Http\Controllers\AdminGameController;
 use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\AuthController;
@@ -11,6 +13,7 @@ use App\Http\Controllers\RankingController;
 use App\Http\Controllers\RatingController;
 use App\Http\Controllers\ReleaseController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\WatchlistController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', HealthController::class);
@@ -31,6 +34,14 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
     Route::put('/me/password', [AuthController::class, 'updatePassword']);
+
+    Route::get('/me/watchlist', [WatchlistController::class, 'index']);
+    Route::put('/me/watchlist/{game}', [WatchlistController::class, 'store']);
+    Route::delete('/me/watchlist/{game}', [WatchlistController::class, 'destroy']);
+
+    Route::get('/admin/collection', [AdminCollectionController::class, 'index']);
+    Route::get('/admin/games', [AdminGameController::class, 'index']);
+    Route::patch('/admin/games/{game}', [AdminGameController::class, 'update']);
 
     Route::get('/admin/users', [AdminUserController::class, 'index']);
     Route::post('/admin/users', [AdminUserController::class, 'store']);

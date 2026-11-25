@@ -1,4 +1,4 @@
-import { useSearchParams } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { ROLE_LABELS, useMe } from '../lib/auth'
 import {
   AUDIT_ACTION_LABELS,
@@ -160,6 +160,10 @@ function AuditLogList() {
 }
 
 function Target({ log }: { log: AuditLog }) {
+  // 集計から外す・戻すの対象になったゲームは、詳細へのリンクにする
+  if (log.target.type === 'game') {
+    return <Link to={`/games/${log.target.id}`}>{log.target.title ?? `ゲーム #${log.target.id}`}</Link>
+  }
   // ユーザーの追加・変更や、ログインの対象になった人
   return log.target.title === null ? <span className="sub">#{log.target.id}</span> : <span>{log.target.title}</span>
 }

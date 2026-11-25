@@ -27,6 +27,7 @@ class GenreController extends Controller
             $upcoming = DB::table('game_genre as gg')
                 ->join('games as g', 'g.id', '=', 'gg.game_id')
                 ->where('g.release_date', '>=', $today)
+                ->whereNull('g.excluded_at')
                 ->groupBy('gg.genre_id')
                 ->selectRaw('gg.genre_id, count(*) as games')
                 ->pluck('games', 'genre_id');
@@ -71,6 +72,7 @@ class GenreController extends Controller
                 $join->on('prev.game_id', '=', 's.game_id')->where('prev.captured_at', '=', $latest->subDay());
             })
             ->where('s.captured_at', $latest)
+            ->whereNull('g.excluded_at')
             ->whereNotIn('ge.key', self::NOT_GENRES)
             ->groupBy('ge.id', 'ge.key', 'ge.name')
             ->orderByDesc('total_players')
@@ -101,6 +103,8 @@ class GenreController extends Controller
         return DB::table('daily_stats as d')
             ->join('game_genre as gg', 'gg.game_id', '=', 'd.game_id')
             ->join('genres as ge', 'ge.id', '=', 'gg.genre_id')
+            ->join('games as g', 'g.id', '=', 'd.game_id')
+            ->whereNull('g.excluded_at')
             ->where('d.date', '>=', $since)
             ->whereNotNull('d.peak_players')
             ->whereNotIn('ge.key', self::NOT_GENRES)

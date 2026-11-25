@@ -24,8 +24,8 @@ class DashboardController extends Controller
 
             return [
                 'updated_at' => $latest?->toIso8601String(),
-                'total_players' => $latest ? (int) DB::table('player_snapshots')->where('captured_at', $latest)->sum('players') : 0,
-                'tracked_games' => Game::where('tracked', true)->where('coming_soon', false)->whereNotNull('steam_appid')->count(),
+                'total_players' => $latest ? (int) DB::table('player_snapshots as s')->join('games as g', 'g.id', '=', 's.game_id')->whereNull('g.excluded_at')->where('s.captured_at', $latest)->sum('s.players') : 0,
+                'tracked_games' => Game::where('tracked', true)->whereNull('excluded_at')->where('coming_soon', false)->whereNotNull('steam_appid')->count(),
                 // キャッシュに入れるため、Collection ではなく配列にする
                 'top' => $top->map(fn (array $g) => [
                     ...$g,
@@ -56,7 +56,7 @@ class DashboardController extends Controller
     {
         $today = now()->timezone('Asia/Tokyo')->toDateString();
 
-        return Game::where('release_date', '>=', $today)
+        return Game::whereNull('excluded_at')->where('release_date', '>=', $today)
             ->where('release_date', '<=', now()->timezone('Asia/Tokyo')->addDays(30)->toDateString())
             ->orderBy('release_date')
             ->limit(12)

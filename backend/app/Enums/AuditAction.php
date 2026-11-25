@@ -11,6 +11,8 @@ enum AuditAction: string
     case UserCreated = 'user.create';
     case UserUpdated = 'user.update';
     case PasswordChanged = 'user.password';
+    case GameExcluded = 'game.exclude';
+    case GameIncluded = 'game.include';
 
     public function label(): string
     {
@@ -19,6 +21,8 @@ enum AuditAction: string
             self::UserCreated => 'ユーザーの追加',
             self::UserUpdated => 'ユーザーの変更',
             self::PasswordChanged => 'パスワードの変更',
+            self::GameExcluded => 'ゲームを集計から外す',
+            self::GameIncluded => 'ゲームを集計に戻す',
         };
     }
 }
