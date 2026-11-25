@@ -93,9 +93,7 @@ class PlayerStats
             'name' => $row->name,
             'image_url' => $row->image_url,
             'players' => $row->players,
-            'change_pct' => $row->players_24h_ago > 0
-                ? round(($row->players - $row->players_24h_ago) / $row->players_24h_ago * 100, 1)
-                : null,
+            'change_pct' => self::changePct($row->players, $row->players_24h_ago),
         ];
     }
 
@@ -116,5 +114,28 @@ class PlayerStats
             ->get(['game_id', 'date', 'peak_players'])
             ->groupBy('game_id')
             ->map(fn (Collection $rows) => $rows->map(fn ($r) => ['date' => $r->date, 'peak' => $r->peak_players])->values()->all());
+    }
+
+    /**
+     * ゲームごとのジャンル名。対象のゲーム分を1回の SQL で取る（ゲームごとに問い合わせない）
+     *
+     * @param  array<int, int>  $gameIds
+     * @return Collection<int, list<string>>
+     */
+    public function genreNames(array $gameIds): Collection
+    {
+        return DB::table('game_genre')
+            ->join('genres', 'genres.id', '=', 'game_genre.genre_id')
+            ->whereIn('game_genre.game_id', $gameIds)
+            ->orderBy('genres.id')
+            ->get(['game_genre.game_id', 'genres.name'])
+            ->groupBy('game_id')
+            ->map(fn ($rows) => $rows->pluck('name')->all());
+    }
+
+    /** 24時間前からの増減率（%）。比べる値がなければ null */
+    public static function changePct(?int $now, ?int $before): ?float
+    {
+        return ($now !== null && $before > 0) ? round(($now - $before) / $before * 100, 1) : null;
     }
 }

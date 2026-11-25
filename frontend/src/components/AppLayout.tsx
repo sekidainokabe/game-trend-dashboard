@@ -41,6 +41,10 @@ export function AppLayout() {
           <NavLink to="/" end>
             ホーム
           </NavLink>
+          <NavLink to="/ranking">ランキング</NavLink>
+          <NavLink to="/genres">ジャンル</NavLink>
+          <NavLink to="/ratings">評価と人気</NavLink>
+          <NavLink to="/releases">発売カレンダー</NavLink>
           {user?.can.view_audit_logs && <NavLink to="/audit-logs">操作履歴</NavLink>}
           {user?.can.manage_users && <NavLink to="/admin/users">ユーザー管理</NavLink>}
         </nav>

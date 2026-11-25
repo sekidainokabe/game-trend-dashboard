@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Game;
 use App\Services\Dashboard\PlayerStats;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -20,7 +20,7 @@ class DashboardController extends Controller
             $top = $latest ? $stats->top($latest, 10) : collect();
             $upcoming = $this->upcoming();
             $trends = $stats->dailyPeaks($top->pluck('id')->all(), 7);
-            $genres = $this->genreNames([...$top->pluck('id'), ...$upcoming->pluck('id')]);
+            $genres = $stats->genreNames([...$top->pluck('id'), ...$upcoming->pluck('id')]);
 
             return [
                 'updated_at' => $latest?->toIso8601String(),
@@ -50,9 +50,9 @@ class DashboardController extends Controller
     /**
      * 今日から30日以内に発売されるゲーム（発売日の近い順）
      *
-     * @return \Illuminate\Database\Eloquent\Collection<int, Game>
+     * @return Collection<int, Game>
      */
-    private function upcoming(): \Illuminate\Database\Eloquent\Collection
+    private function upcoming(): Collection
     {
         $today = now()->timezone('Asia/Tokyo')->toDateString();
 
@@ -61,22 +61,5 @@ class DashboardController extends Controller
             ->orderBy('release_date')
             ->limit(12)
             ->get(['id', 'name', 'image_url', 'release_date', 'platforms']);
-    }
-
-    /**
-     * ゲームごとのジャンル名。対象のゲーム分を1回の SQL で取る（ゲームごとに問い合わせない）
-     *
-     * @param  array<int, int>  $gameIds
-     * @return Collection<int, list<string>>
-     */
-    private function genreNames(array $gameIds): Collection
-    {
-        return DB::table('game_genre')
-            ->join('genres', 'genres.id', '=', 'game_genre.genre_id')
-            ->whereIn('game_genre.game_id', $gameIds)
-            ->orderBy('genres.id')
-            ->get(['game_genre.game_id', 'genres.name'])
-            ->groupBy('game_id')
-            ->map(fn ($rows) => $rows->pluck('name')->all());
     }
 }

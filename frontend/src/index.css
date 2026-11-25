@@ -105,7 +105,8 @@ input {
 .app-nav {
   display: flex;
   flex: 1;
-  gap: 16px;
+  flex-wrap: wrap;
+  gap: 4px 16px;
 }
 
 .app-nav a {
@@ -729,6 +730,13 @@ h2[tabindex="-1"]:focus {
   --up: #16a34a;
   --down: #dc2626;
   --sale: #f59e0b;
+  /* ジャンルの色分け。隣り合っても見分けやすい色相を選ぶ */
+  --cat-1: #2563eb;
+  --cat-2: #ea580c;
+  --cat-3: #059669;
+  --cat-4: #9333ea;
+  --cat-5: #db2777;
+  --cat-other: #9ca3af;
   --card-shadow: 0 1px 2px rgb(0 0 0 / 6%), 0 2px 8px rgb(0 0 0 / 4%);
 }
 
@@ -737,6 +745,12 @@ h2[tabindex="-1"]:focus {
     --up: #4ade80;
     --down: #f87171;
     --sale: #fbbf24;
+    --cat-1: #60a5fa;
+    --cat-2: #fb923c;
+    --cat-3: #34d399;
+    --cat-4: #c084fc;
+    --cat-5: #f472b6;
+    --cat-other: #6b7280;
     --card-shadow: none;
   }
 }
@@ -1072,4 +1086,85 @@ h2[tabindex="-1"]:focus {
 
 .chart {
   width: 100%;
+}
+
+/* ===== ランキング表・散布図・発売カレンダー ===== */
+.sort-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-weight: inherit;
+  white-space: nowrap;
+}
+
+.ranking-table td {
+  vertical-align: middle;
+}
+
+.table-game {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 260px;
+}
+
+.table-game .chips {
+  margin-top: 2px;
+}
+
+.ranking-table .sale-badge {
+  margin-left: 6px;
+}
+
+.chart-tip {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  font-size: 0.85em;
+}
+
+.chart-tip strong {
+  color: var(--text-h);
+}
+
+.release-days {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.release-day {
+  margin: 16px 0 8px;
+  font-size: 1rem;
+  color: var(--text-h);
+}
+
+.release-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.release-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.release-card .thumb-large {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 460 / 215;
+}
+
+.release-card a {
+  font-weight: 700;
 }

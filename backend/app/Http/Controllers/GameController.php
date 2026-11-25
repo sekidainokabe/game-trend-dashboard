@@ -32,9 +32,7 @@ class GameController extends Controller
 
             return [
                 'players' => $row?->players,
-                'change_pct' => ($row && $row->players_24h_ago > 0)
-                    ? round(($row->players - $row->players_24h_ago) / $row->players_24h_ago * 100, 1)
-                    : null,
+                'change_pct' => PlayerStats::changePct($row?->players, $row?->players_24h_ago),
                 'peak_30d' => DB::table('daily_stats')->where('game_id', $game->id)
                     ->where('date', '>=', now()->timezone('Asia/Tokyo')->subDays(29)->toDateString())
                     ->max('peak_players'),

@@ -5,7 +5,11 @@ use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GameController;
+use App\Http\Controllers\GenreController;
 use App\Http\Controllers\HealthController;
+use App\Http\Controllers\RankingController;
+use App\Http\Controllers\RatingController;
+use App\Http\Controllers\ReleaseController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -13,6 +17,10 @@ Route::get('/health', HealthController::class);
 
 // 閲覧はログインなしでできる（URL を開いた人がすぐ中身を見られるように）。データは毎時しか変わらないのでキャッシュする
 Route::get('/dashboard', DashboardController::class);
+Route::get('/ranking', RankingController::class);
+Route::get('/genres', GenreController::class);
+Route::get('/ratings', RatingController::class);
+Route::get('/releases', ReleaseController::class);
 Route::get('/games/{game}', [GameController::class, 'show']);
 Route::get('/games/{game}/players', [GameController::class, 'players']);
 
