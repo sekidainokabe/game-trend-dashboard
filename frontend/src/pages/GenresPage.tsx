@@ -31,7 +31,7 @@ function GenresBody({ data }: { data: GenreReport }) {
       <section className="panel" aria-labelledby="genre-players-title">
         <h2 id="genre-players-title">ジャンル別の、今遊んでいる人数</h2>
         <p className="sub">1本のゲームが複数のジャンルに入るため、合計は全体の人数より多くなります。</p>
-        <div className="chart">
+        <div className="chart" role="img" aria-label="ジャンル別の人数の横棒グラフ。数値は次の「ジャンルごとの数字」の表にあります">
           <ResponsiveContainer width="100%" height={Math.max(240, data.genres.length * 34)}>
             <BarChart data={data.genres} layout="vertical" margin={{ top: 8, right: 56, bottom: 8, left: 8 }}>
               <CartesianGrid stroke="var(--border)" horizontal={false} />
@@ -106,7 +106,17 @@ function GenresBody({ data }: { data: GenreReport }) {
         {trend.length < 2 ? (
           <p className="status">2日分以上のデータがたまると表示されます。</p>
         ) : (
-          <div className="chart">
+          <div
+            className="chart"
+            role="img"
+            aria-label={`${top.length}ジャンルの30日間の推移の折れ線グラフ。${top
+              .map((g) => {
+                const first = trend[0][g.key as keyof (typeof trend)[number]]
+                const last = trend[trend.length - 1][g.key as keyof (typeof trend)[number]]
+                return `${g.name}は ${formatCompact(Number(first ?? 0))}人から ${formatCompact(Number(last ?? 0))}人`
+              })
+              .join('、')}`}
+          >
             <ResponsiveContainer width="100%" height={320}>
               <LineChart data={trend} margin={{ top: 8, right: 16, bottom: 8, left: 8 }}>
                 <CartesianGrid stroke="var(--border)" vertical={false} />

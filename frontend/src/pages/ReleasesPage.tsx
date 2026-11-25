@@ -22,7 +22,11 @@ export function ReleasesPage() {
         <>
           <section className="panel" aria-labelledby="months-title">
             <h2 id="months-title">月ごとの発売本数</h2>
-            <div className="chart">
+            <div
+              className="chart"
+              role="img"
+              aria-label={`月ごとの発売本数の棒グラフ。${data.months.map((m) => `${formatMonth(m.month)} ${m.count}本`).join('、')}`}
+            >
               <ResponsiveContainer width="100%" height={180}>
                 <BarChart data={data.months} margin={{ top: 16, right: 8, bottom: 0, left: 0 }}>
                   <XAxis dataKey="month" tickFormatter={(m: string) => `${Number(m.slice(5))}月`} tick={{ fill: 'var(--text)', fontSize: 12 }} />

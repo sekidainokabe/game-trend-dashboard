@@ -7,6 +7,7 @@ import {
   formatNumber,
   formatPointLabel,
   formatPrice,
+  describeSeries,
   RANGES,
   saleRanges,
   useGame,
@@ -164,7 +165,11 @@ function PlayersChart({ id }: { id: number }) {
       {isError && <p role="alert">推移を取得できませんでした。</p>}
       {data && data.points.length === 0 && <p className="status">この期間のデータはまだありません。</p>}
       {data && data.points.length > 0 && (
-        <div className="chart">
+        <div
+          className="chart"
+          role="img"
+          aria-label={`遊んでいる人数の推移のグラフ。${describeSeries(data.points, data.granularity)}${sales.length > 0 ? `。セールの期間が${sales.length}回あります` : ''}`}
+        >
           <ResponsiveContainer width="100%" height={320}>
             <ComposedChart data={data.points} margin={{ top: 8, right: 16, bottom: 8, left: 8 }}>
               <CartesianGrid stroke="var(--border)" vertical={false} />

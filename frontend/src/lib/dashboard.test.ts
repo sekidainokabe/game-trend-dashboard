@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { changeDirection, formatChange, formatCompact, formatPointLabel, formatPrice, formatReleaseDate, saleRanges } from './dashboard'
+import { changeDirection, describeSeries, formatChange, formatCompact, formatPointLabel, formatPrice, formatReleaseDate, saleRanges } from './dashboard'
 
 describe('数の表示', () => {
   it('1万以上は「万」で短くする', () => {
@@ -46,5 +46,18 @@ describe('saleRanges', () => {
       { from: '2026-11-02', to: '2026-11-03', percent: 50 },
       { from: '2026-11-05', to: '2026-11-05', percent: 30 },
     ])
+  })
+})
+
+describe('describeSeries', () => {
+  it('グラフの最大・最小・最新を文にする', () => {
+    const points = [
+      { t: '2026-11-22', players: 800 },
+      { t: '2026-11-23', players: 1200 },
+      { t: '2026-11-24', players: 1000 },
+      { t: '2026-11-25', players: null },
+    ]
+    expect(describeSeries(points, 'day')).toBe('最大 1,200人（11/23）、最小 800人（11/22）、最新 1,000人')
+    expect(describeSeries([], 'day')).toBe('データはまだありません')
   })
 })

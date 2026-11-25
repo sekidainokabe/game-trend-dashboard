@@ -74,7 +74,11 @@ function RatingScatter({ games, y }: { games: RatedGame[]; y: YKey }) {
       <p className="sub">
         {points.length}本（値のないゲームは出していません）。人数{y === 'recommendations' && 'とレビュー数'}は差が大きいため、目盛りを10倍ごとにしています。
       </p>
-      <div className="chart">
+      <div
+        className="chart"
+        role="img"
+        aria-label={`今の人数と${y === 'metacritic' ? '評価' : 'レビュー数'}の散布図（${points.length}本）。それぞれの値はランキングの表で並べ替えて確かめられます`}
+      >
         <ResponsiveContainer width="100%" height={420}>
           <ScatterChart margin={{ top: 8, right: 16, bottom: 24, left: 8 }}>
             <CartesianGrid stroke="var(--border)" />

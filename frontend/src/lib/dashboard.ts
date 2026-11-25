@@ -174,3 +174,16 @@ export function saleRanges(points: PlayerPoint[]): { from: string; to: string; p
   }
   return ranges
 }
+
+/**
+ * グラフの内容を文で説明する（画面の読み上げソフトの利用者向け。グラフの図は読み上げられないため）。
+ * 例：「最大 1,200人（11/24 17時）、最小 800人、最新 1,000人」
+ */
+export function describeSeries(points: PlayerPoint[], granularity: 'hour' | 'day'): string {
+  const values = points.filter((p): p is PlayerPoint & { players: number } => p.players !== null)
+  if (values.length === 0) return 'データはまだありません'
+  const max = values.reduce((a, b) => (b.players > a.players ? b : a))
+  const min = values.reduce((a, b) => (b.players < a.players ? b : a))
+  const last = values[values.length - 1]
+  return `最大 ${formatNumber(max.players)}人（${formatPointLabel(max.t, granularity)}）、最小 ${formatNumber(min.players)}人（${formatPointLabel(min.t, granularity)}）、最新 ${formatNumber(last.players)}人`
+}
