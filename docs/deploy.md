@@ -88,7 +88,7 @@ Settings → Developer settings → Personal access tokens → **Fine-grained to
 | `DB_URL` | Supabase の Session pooler の URI（GitHub の Secret と同じ値） |
 | `SESSION_SECURE_COOKIE` | `true` |
 | `SANCTUM_STATEFUL_DOMAINS` | 公開ドメイン（`https://` を付けない） |
-| `DEMO_ACCOUNTS_LOCKED` | `true`（公開しているデモ用アカウントの役割・状態・パスワードを変えられないようにする） |
+| `DEMO_ACCOUNTS_LOCKED` | `true`（README に載せているデモ用アカウントを守る。2つのアカウントの役割・状態・パスワードを変えられなくし、admin は管理画面を見るだけにする） |
 | `PORT` | `8080` |
 
 `APP_ENV=production`、`APP_DEBUG=false`、`LOG_CHANNEL=stderr` は `Dockerfile` で設定済みです。`RAWG_API_KEY` は取得を行わないため不要です。

@@ -10,6 +10,7 @@ import {
   type AdminUser,
   type NewUserInput,
 } from '../lib/adminUsers'
+import { DemoReadOnlyNotice } from '../components/DemoReadOnlyNotice'
 import { ROLE_LABELS, useMe, type UserRole } from '../lib/auth'
 import { formatDateTime } from '../lib/format'
 
@@ -28,10 +29,10 @@ export function AdminUsersPage() {
       </>
     )
   }
-  return <AdminUserList />
+  return <AdminUserList canCreate={me?.can.create_users ?? false} />
 }
 
-function AdminUserList() {
+function AdminUserList({ canCreate }: { canCreate: boolean }) {
   const [searchParams, setSearchParams] = useSearchParams()
   const q = searchParams.get('q') ?? ''
   const page = Math.max(1, Number(searchParams.get('page')) || 1)
@@ -57,7 +58,7 @@ function AdminUserList() {
         辞めた人や異動した人は、削除せずに無効化します（過去の変更セットや操作履歴に名前を残すため）。無効化するとすぐにログインできなくなります。
       </p>
 
-      <AddUserForm />
+      {canCreate ? <AddUserForm /> : <DemoReadOnlyNotice />}
 
       <form className="filters" role="search" onSubmit={handleSearch}>
         <label className="filter-select">

@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router'
+import { DemoReadOnlyNotice } from '../components/DemoReadOnlyNotice'
 import { GameThumb } from '../components/GameParts'
 import { GAME_STATE_LABELS, useAdminGames, useSetExcluded, type AdminGame, type GameState } from '../lib/adminData'
 import { useMe } from '../lib/auth'
@@ -18,10 +19,10 @@ export function AdminGamesPage() {
       </>
     )
   }
-  return <GamesBody />
+  return <GamesBody canUpdate={me?.can.update_games ?? false} />
 }
 
-function GamesBody() {
+function GamesBody({ canUpdate }: { canUpdate: boolean }) {
   const [searchParams, setSearchParams] = useSearchParams()
   const q = searchParams.get('q') ?? ''
   const state = STATES.find((s) => s === searchParams.get('state'))
@@ -62,6 +63,7 @@ function GamesBody() {
       <p className="lead">
         Steam の人気上位には、ゲームではないソフト（壁紙アプリなど）も入ります。集計から外すと、人数の取得をやめ、ランキングや集計にも出なくなります。操作は操作履歴に残ります。
       </p>
+      {!canUpdate && <DemoReadOnlyNotice />}
 
       <div className="filters">
         <form className="filter-select" onSubmit={search} role="search">
@@ -103,7 +105,7 @@ function GamesBody() {
                   <th>状態</th>
                   <th>詳細の取得</th>
                   <th>取得元</th>
-                  <th>操作</th>
+                  {canUpdate && <th>操作</th>}
                 </tr>
               </thead>
               <tbody>
@@ -122,16 +124,18 @@ function GamesBody() {
                     </td>
                     <td className="nowrap">{g.details_fetched_at ? formatUpdatedAt(g.details_fetched_at) : '—'}</td>
                     <td className="nowrap">{[g.steam_appid && 'Steam', g.rawg_id && 'RAWG'].filter(Boolean).join('・')}</td>
-                    <td>
-                      <button
-                        type="button"
-                        className={g.state === 'excluded' ? 'secondary' : 'danger'}
-                        disabled={setExcluded.isPending}
-                        onClick={() => toggle(g)}
-                      >
-                        {g.state === 'excluded' ? '集計に戻す' : '集計から外す'}
-                      </button>
-                    </td>
+                    {canUpdate && (
+                      <td>
+                        <button
+                          type="button"
+                          className={g.state === 'excluded' ? 'secondary' : 'danger'}
+                          disabled={setExcluded.isPending}
+                          onClick={() => toggle(g)}
+                        >
+                          {g.state === 'excluded' ? '集計に戻す' : '集計から外す'}
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

@@ -152,4 +152,22 @@ class WatchlistAndAdminTest extends TestCase
         $this->assertDatabaseMissing('player_snapshots', ['game_id' => $excluded->id]);
         Http::assertSentCount(1);
     }
+
+    public function test_公開デモの_admin_はゲームを集計から外せない(): void
+    {
+        config(['demo.accounts_locked' => true]);
+        $game = $this->game('Demo Game', 1000);
+
+        $this->actingAs($this->admin, 'web')
+            ->getJson('/api/me')
+            ->assertJsonPath('data.can.manage_games', true)
+            ->assertJsonPath('data.can.update_games', false);
+        $this->getJson('/api/admin/games')->assertOk();
+
+        $this->patchJson("/api/admin/games/{$game->id}", ['excluded' => true])
+            ->assertForbidden()
+            ->assertJsonPath('message', '公開デモのため、管理画面は見るだけです（変更はできません）。');
+        $this->assertNull($game->fresh()->excluded_at);
+        $this->assertSame(0, AuditLog::count());
+    }
 }

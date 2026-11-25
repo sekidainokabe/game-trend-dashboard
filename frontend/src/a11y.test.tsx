@@ -24,7 +24,7 @@ const game = { id: 1, name: 'テストゲーム', image_url: 'https://example.co
 const meta = { current_page: 1, last_page: 2, total: 60 }
 
 const API: Record<string, unknown> = {
-  '/api/me': { data: { id: 1, name: '管理 花子', email: 'admin@example.com', role: 'admin', can: { view_audit_logs: true, manage_users: true, manage_games: true, change_password: true } } },
+  '/api/me': { data: { id: 1, name: '管理 花子', email: 'admin@example.com', role: 'admin', can: { view_audit_logs: true, manage_users: true, manage_games: true, update_games: true, create_users: true, change_password: true } } },
   '/api/dashboard': {
     updated_at: '2026-11-24T08:00:00+00:00', total_players: 3_000_000, tracked_games: 96,
     top: [{ ...game, genres: ['RPG'], trend: [{ date: '2026-11-23', peak: 1 }, { date: '2026-11-24', peak: 2 }] }],
@@ -123,4 +123,22 @@ describe('アクセシビリティ（axe-core）', () => {
       expect(await violations()).toEqual([])
     })
   }
+})
+
+describe('公開デモの admin（見るだけ）', () => {
+  const me = API['/api/me'] as { data: { can: Record<string, boolean> } }
+
+  beforeEach(() => {
+    me.data.can = { ...me.data.can, update_games: false, create_users: false }
+  })
+  afterEach(() => {
+    me.data.can = { ...me.data.can, update_games: true, create_users: true }
+  })
+
+  it('ゲームの管理は一覧だけを出し、集計から外すボタンを出さない', async () => {
+    await renderAt('/admin/games', '/admin/games', <AdminGamesPage />, 'テストゲーム')
+    expect(container.textContent).toContain('公開デモのため、管理画面は見るだけです')
+    expect([...container.querySelectorAll('button')].map((b) => b.textContent)).not.toContain('集計から外す')
+    expect(await violations()).toEqual([])
+  })
 })

@@ -16,9 +16,16 @@ class UserPolicy
         return $user->role === UserRole::Admin;
     }
 
-    public function create(User $user): bool
+    public function create(User $user): Response
     {
-        return $user->role === UserRole::Admin;
+        if ($user->role !== UserRole::Admin) {
+            return Response::deny('ユーザーを管理する権限がありません。');
+        }
+        if ($user->isLockedDemoAccount()) {
+            return Response::deny(User::DEMO_READ_ONLY_MESSAGE);
+        }
+
+        return Response::allow();
     }
 
     /**
@@ -29,6 +36,9 @@ class UserPolicy
     {
         if ($user->role !== UserRole::Admin) {
             return Response::deny('ユーザーを管理する権限がありません。');
+        }
+        if ($user->isLockedDemoAccount()) {
+            return Response::deny(User::DEMO_READ_ONLY_MESSAGE);
         }
         if ($user->is($target)) {
             return Response::deny('自分自身の役割や状態は、ここでは変えられません。');

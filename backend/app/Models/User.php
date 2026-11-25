@@ -39,6 +39,9 @@ class User extends Authenticatable
         return $this->disabled_at !== null;
     }
 
+    /** 公開デモの admin が変更の操作をしたときに返す理由 */
+    public const DEMO_READ_ONLY_MESSAGE = '公開デモのため、管理画面は見るだけです（変更はできません）。';
+
     /** 公開デモで守っているアカウントか（config/demo.php） */
     public function isLockedDemoAccount(): bool
     {

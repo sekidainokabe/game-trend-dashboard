@@ -30,6 +30,9 @@ class UserResource extends JsonResource
                 'view_audit_logs' => $this->resource->can('viewAny', AuditLog::class),
                 'manage_users' => $this->resource->can('viewAny', User::class),
                 'manage_games' => $this->resource->can('manage', Game::class),
+                // 公開デモの admin は見るだけ（config/demo.php）。変更のボタンを出さない
+                'update_games' => $this->resource->can('update', Game::class),
+                'create_users' => $this->resource->can('create', User::class),
                 // 公開デモのアカウントは、自分のパスワードも変えられない（config/demo.php）
                 'change_password' => $this->resource->can('changePassword', $this->resource),
             ],

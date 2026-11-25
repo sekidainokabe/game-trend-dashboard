@@ -68,7 +68,7 @@ class AdminGameController extends Controller
 
     public function update(Request $request, Game $game): JsonResponse
     {
-        Gate::authorize('manage', Game::class);
+        Gate::authorize('update', Game::class);
         $excluded = $request->validate(['excluded' => ['required', 'boolean']])['excluded'];
 
         if ($excluded !== ($game->excluded_at !== null)) {

@@ -7,6 +7,14 @@
 
 - 公開デモ：準備中（Railway に公開したら、ここに URL を載せます）
 - 閲覧はログインなしでできます。ログインすると、ウォッチリストと管理画面が使えます
+
+| デモ用のアカウント | パスワード | できること |
+| --- | --- | --- |
+| member@example.com | password | 閲覧、ウォッチリスト |
+| admin@example.com | password | 上に加えて、管理画面（取得の状況、ゲーム、ユーザー、操作の履歴）。**公開デモでは見るだけ**です |
+
+公開デモでは誰でも admin としてログインできるため、ゲームを集計から外す・ユーザーを追加するなどの変更は、サーバー側で止めています（いたずらで本番のデータ集めが止まらないように）。
+
 - データ提供：[Steam](https://store.steampowered.com/)、[RAWG](https://rawg.io/)。ゲームの名称・画像の権利は各権利者に帰属します
 
 ※ キャプチャは手元の開発環境の画面です。最新の人数は Steam から取得した実際の値ですが、過去の推移は開発用に作った仮のデータ（`app:seed-history`）です。
@@ -62,7 +70,7 @@ Supabase（PostgreSQL） ◀── Railway（Laravel の API ＋ React の画面
 | フロントエンド | React 19、TypeScript、Vite、React Router、TanStack Query、Recharts |
 | サーバー | PHP 8.5、Laravel 13、Sanctum（クッキーでのログイン）、FrankenPHP |
 | DB | PostgreSQL 17（本番は Supabase） |
-| テスト・確認 | PHPUnit（64件）、Vitest（51件）、axe-core、oxlint、Pint、GitHub Actions の CI |
+| テスト・確認 | PHPUnit（66件）、Vitest（52件）、axe-core、oxlint、Pint、GitHub Actions の CI |
 | 本番 | Railway（Docker）、GitHub Actions、cron-job.org |
 
 ## 募集要件との対応
@@ -77,7 +85,7 @@ HAL研究所「コーポレートウェブシステムエンジニア」の要�
 | SQL | 集計を1回の SQL で行い、ゲームの本数によらず SQL の回数を一定にする。`DISTINCT ON`、`generate_series`、`EXPLAIN ANALYZE` での調査 | `backend/app/Http/Controllers/`、[docs/performance.md](docs/performance.md) |
 | フロントエンドとサーバーサイドの両方 | 画面・API・DB・定期処理・本番の構成まで1人で作成 | このリポジトリ全体 |
 | （歓迎）データベース設計 | 生データと1日ごとの集計の二層、保存期間、索引と読む SQL の対応、外部キーと削除時の扱い | `backend/database/migrations/`、[docs/performance.md](docs/performance.md) |
-| （歓迎）利用者100名以上のサービス | 集計結果のキャッシュ、本番の約20倍のデータで全 API が 90ms 以内（キャッシュなし）、役割ごとの権限と操作の履歴、取得の失敗を管理画面で見られる | [docs/performance.md](docs/performance.md)、`backend/app/Services/Dashboard/PlayerStats.php` |
+| （歓迎）利用者100名以上のサービス | 集計結果のキャッシュ、本番の約20倍のデータで全 API が 90ms 以内（キャッシュなし）、役割ごとの権限（Policy）と操作の履歴、公開デモでの admin の変更の制限、取得の失敗を管理画面で見られる | [docs/performance.md](docs/performance.md)、`backend/app/Services/Dashboard/PlayerStats.php` |
 
 ## 手元で動かす
 
@@ -100,10 +108,7 @@ npm ci
 npm run dev                     # http://localhost:5173
 ```
 
-| アカウント | パスワード | できること |
-| --- | --- | --- |
-| member@example.com | password | 閲覧、ウォッチリスト |
-| admin@example.com | password | 上に加えて、管理画面（取得の状況、ゲーム、ユーザー、操作の履歴） |
+手元では、上のデモ用アカウントで管理画面の変更もできます（`.env` の `DEMO_ACCOUNTS_LOCKED` が `false` のため）。
 
 テスト：
 

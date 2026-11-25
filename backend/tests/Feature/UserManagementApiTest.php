@@ -238,11 +238,38 @@ class UserManagementApiTest extends TestCase
         $this->assertGuest('web');
     }
 
-    public function test_公開デモでは、デモ用アカウントを変えられないが、ユーザーの追加はできる(): void
+    public function test_公開デモの_admin_は見るだけで、ユーザーを追加も変更もできない(): void
     {
         config(['demo.accounts_locked' => true]);
+        $readOnly = '公開デモのため、管理画面は見るだけです（変更はできません）。';
 
         $this->actingAs($this->admin, 'web')
+            ->getJson('/api/me')
+            ->assertJsonPath('data.can.manage_users', true)
+            ->assertJsonPath('data.can.create_users', false);
+
+        // 一覧は見られる
+        $this->getJson('/api/admin/users')
+            ->assertOk()
+            ->assertJsonPath('data.1.can.update', false)
+            ->assertJsonPath('data.1.locked_reason', $readOnly);
+
+        $this->postJson('/api/admin/users', $this->newUser())
+            ->assertForbidden()
+            ->assertJsonPath('message', $readOnly);
+        $this->patchJson("/api/admin/users/{$this->approver->id}", ['disabled' => true])
+            ->assertForbidden()
+            ->assertJsonPath('message', $readOnly);
+        $this->assertFalse($this->approver->fresh()->isDisabled());
+        $this->assertDatabaseCount('users', 3);
+    }
+
+    public function test_公開デモでも、デモ用ではない_admin_はユーザーを追加できるが、デモ用アカウントは変えられない(): void
+    {
+        config(['demo.accounts_locked' => true]);
+        $owner = User::factory()->create(['email' => 'owner@example.com', 'role' => UserRole::Admin]);
+
+        $this->actingAs($owner, 'web')
             ->patchJson("/api/admin/users/{$this->editor->id}", ['disabled' => true])
             ->assertForbidden()
             ->assertJsonPath('message', 'デモ用のアカウントは変更できません。');
